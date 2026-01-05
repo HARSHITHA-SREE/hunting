@@ -13,6 +13,7 @@ This repository contains a complete collection of testing payloads organized by 
 - **[XSS (Cross-Site Scripting)](./XSS/)** - Client-side code injection
 - **[Command Injection](./Command-Injection/)** - OS command execution & symbolic link attacks
 - **[SSTI (Server-Side Template Injection)](./SSTI/)** - Template engine exploitation & RCE
+- **[SSJI (Server-Side JavaScript Injection)](./SSJI/)** - Node.js code injection & RCE
 - **[CSV Injection](./CSV-Injection/)** - Formula injection in spreadsheets
 - **[LDAP Injection](./LDAP-Injection/)** - Directory service manipulation
 - **[Log Injection](./Log-Injection/)** - Log file manipulation
@@ -26,12 +27,15 @@ This repository contains a complete collection of testing payloads organized by 
 
 **Authentication & Authorization:**
 - **[Authentication Bypass](./Authentication-Bypass/)** - Auth bypass techniques
+- **[Password Reset](./Password-Reset/)** - Password reset vulnerabilities & account takeover
 - **[Weak Passwords](./Weak-Passwords/)** - Common weak passwords and defaults
 
 **Server-Side Vulnerabilities:**
 - **[SSRF](./SSRF/)** - Server-side request forgery
 - **[Deserialization](./Deserialization/)** - Insecure deserialization
 - **[File Upload](./File-Upload/)** - Malicious file upload & RCE techniques
+- **[Symbolic Link Attacks](./Symbolic-Link-Attacks/)** - Symlink exploitation & file system attacks
+- **[Timing Attacks](./Timing-Attacks/)** - Side-channel timing analysis & user enumeration
 
 **Configuration & Design:**
 - **[Security Misconfiguration](./Security-Misconfiguration/)** - Default credentials, misconfigurations
@@ -41,6 +45,9 @@ This repository contains a complete collection of testing payloads organized by 
 - **[Business Logic](./Business-Logic/)** - Business logic flaws
 - **[Weak Cryptography](./Weak-Cryptography/)** - Weak crypto implementations
 - **[Vulnerable Components](./Vulnerable-Components/)** - Known vulnerable libraries
+
+**Network & Anonymity:**
+- **[Tor-Based Attacks](./Tor-Based-Attacks/)** - Tor anonymity exploitation & onion service testing
 
 ## 🎯 Purpose
 
