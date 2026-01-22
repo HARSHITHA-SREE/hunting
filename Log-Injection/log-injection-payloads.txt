@@ -48,4 +48,5 @@ user\x00admin
 SELECT * FROM users WHERE username='admin' AND password='wrong'
 <script>alert('XSS')</script>
 ../../../etc/passwd
+../../../etc/shadow
 ; whoami
